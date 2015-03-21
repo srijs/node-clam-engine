@@ -1,4 +1,4 @@
-var Engine = require('./build/release/engine');
+var Engine = require('./build/Release/engine');
 
 exports.createEngine = function (cb) {
   var engine = new Engine();
