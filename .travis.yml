@@ -1,0 +1,9 @@
+language: node_js
+matrix:
+  fast_finish: true
+  include:
+    - "0.10"
+  allow_failures:
+    - "0.12"
+    - "0.11"
+    - "iojs"
