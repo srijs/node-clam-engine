@@ -20,7 +20,7 @@ class ClamScanWorker : public NanAsyncWorker {
 
   struct cl_engine *engine;
   int ret;
-  Persistent<String> filename;
+  const char *filename;
   const char *virname;
   unsigned long int size;
 
@@ -28,15 +28,14 @@ class ClamScanWorker : public NanAsyncWorker {
 
   ClamScanWorker(NanCallback *callback, struct cl_engine *engine, Local<String> name)
     : NanAsyncWorker(callback), engine(engine), size(0) {
-      NanAssignPersistent(filename, name);
+      filename = strdup(*NanUtf8String(name));
     }
   ~ClamScanWorker() {
-    NanDisposePersistent(filename);
+    delete filename;
   }
 
   void Execute() {
-    const char *name = *NanAsciiString(filename);
-    ret = cl_scanfile(name, &virname, &size, engine, CL_SCAN_STDOPT);
+    ret = cl_scanfile(filename, &virname, &size, engine, CL_SCAN_STDOPT);
   }
 
   void HandleOKCallback() {
