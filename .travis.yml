@@ -7,3 +7,6 @@ matrix:
     - node_js: "0.10"
   allow_failures:
     - node_js: "iojs"
+addons:
+  apt_packages:
+    - libclamav-dev
