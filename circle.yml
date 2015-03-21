@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 0.10
+    version: "0.10"
 dependencies:
   pre:
     - sudo apt-get update; sudo apt-get install libclamav-dev
