@@ -1,0 +1,23 @@
+{
+  "name": "clam-engine",
+  "version": "1.0.0",
+  "description": "Native bindings for the clamav engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "clamav",
+    "virus",
+    "scan",
+    "clamscan",
+    "clam",
+    "clamd",
+    "security"
+  ],
+  "author": "Sam Rijs",
+  "license": "MIT",
+  "dependencies": {
+    "nan": "^1.7.0"
+  }
+}
