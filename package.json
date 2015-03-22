@@ -6,6 +6,10 @@
   "scripts": {
     "test": "node test.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:srijs/node-clam-engine.git"
+  },
   "keywords": [
     "clamav",
     "virus",
