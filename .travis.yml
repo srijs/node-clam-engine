@@ -10,5 +10,6 @@ addons:
   apt_packages:
     - libclamav-dev
 before_script:
-  - echo "DatabaseMirror database.clamav.net" >> freshclam.conf
-  - freshclam --config-file freshclam.conf
+  - mkdir /var/lib/clamav
+  - wget http://db.local.clamav.net/main.cvd -O /var/lib/clamav/main.cvd
+  - wget http://db.local.clamav.net/daily.cvd -O /var/lib/clamav/daily.cvd
