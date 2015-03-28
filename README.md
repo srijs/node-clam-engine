@@ -1,4 +1,4 @@
-# node-clam-engine
+# node-clam-engine [![Build Status](https://travis-ci.org/srijs/node-clam-engine.svg?branch=master)](https://travis-ci.org/srijs/node-clam-engine)
 
 Clam Engine provides robust native bindings to the clamav library. It allows you to scan files for viruses in-process, without requiring a running instance of `clamd`, or imposing the startup time of the `clamscan` command.
 
