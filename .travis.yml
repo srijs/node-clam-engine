@@ -7,16 +7,12 @@ matrix:
     - node_js: "0.11"
     - node_js: "0.10"
 before_install:
-  - sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
   - sudo apt-get -qq update
-  - sudo apt-get -qq install gcc-4.8 g++-4.8 libclamav-dev
-  - sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-4.8 20
-  - sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-4.8 20
-  - sudo update-alternatives --config gcc
-  - sudo update-alternatives --config g++
+  - sudo apt-get -qq install libclamav-dev
 
 before_script:
   - sudo mkdir /var/lib/clamav && sudo chmod 777 /var/lib/clamav
   - wget http://db.us.clamav.net/main.cvd -O /var/lib/clamav/main.cvd
   - wget http://db.us.clamav.net/daily.cvd -O /var/lib/clamav/daily.cvd
 sudo: required
+dist: trusty
