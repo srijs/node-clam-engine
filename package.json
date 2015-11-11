@@ -1,6 +1,6 @@
 {
   "name": "clam-engine",
-  "version": "1.0.4",
+  "version": "2.0.0",
   "description": "Native bindings for the clamav engine",
   "main": "index.js",
   "scripts": {
