@@ -22,6 +22,6 @@
   "author": "Sam Rijs",
   "license": "MIT",
   "dependencies": {
-    "nan": "^1.7.0"
+    "nan": "^2.1.0"
   }
 }

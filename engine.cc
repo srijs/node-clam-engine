@@ -2,21 +2,32 @@
 
 #include <clamav.h>
 
-using node::ObjectWrap;
 
+using v8::Exception;
 using v8::Function;
 using v8::FunctionTemplate;
 using v8::Handle;
 using v8::Local;
 using v8::Number;
 using v8::Object;
-using v8::Persistent;
 using v8::String;
 using v8::Value;
 
+using Nan::AsyncQueueWorker;
+using Nan::AsyncWorker;
+using Nan::Callback;
+using Nan::Error;
+using Nan::HandleScope;
+using Nan::MakeCallback;
+using Nan::Null;
+using Nan::ObjectWrap;
+using Nan::Persistent;
+using Nan::Undefined;
+using Nan::Utf8String;
+
 static Persistent<FunctionTemplate> constructor;
 
-class ClamScanWorker : public NanAsyncWorker {
+class ClamScanWorker : public AsyncWorker {
 
   struct cl_engine *engine;
   int ret;
@@ -26,9 +37,9 @@ class ClamScanWorker : public NanAsyncWorker {
 
   public:
 
-  ClamScanWorker(NanCallback *callback, struct cl_engine *engine, Local<String> name)
-    : NanAsyncWorker(callback), engine(engine), size(0) {
-      filename = strdup(*NanUtf8String(name));
+  ClamScanWorker(Callback *callback, struct cl_engine *engine, Local<String> name)
+    : AsyncWorker(callback), engine(engine), size(0) {
+      filename = strdup(*Utf8String(name));
     }
   ~ClamScanWorker() {
     delete filename;
@@ -39,20 +50,20 @@ class ClamScanWorker : public NanAsyncWorker {
   }
 
   void HandleOKCallback() {
-    NanScope();
-    Local<Value>argv[2];
+    HandleScope();
+    v8::Local<Value>argv[2];
     switch (ret) {
     case CL_CLEAN:
-      argv[0] = NanNull();
-      argv[1] = NanNull();
+      argv[0] = Null();
+      argv[1] = Null();
       break;
     case CL_VIRUS:
-      argv[0] = NanNull();
-      argv[1] = NanNew<String>(virname);
+      argv[0] = Null();
+      argv[1] = Nan::New<String>(virname).ToLocalChecked();
       break;
     default:
-      argv[0] = NanError(cl_strerror(ret), ret);
-      argv[1] = NanNull();
+      argv[0] = Error(cl_strerror(ret));
+      argv[1] = Null();
       break;
     }
     callback->Call(2, argv);
@@ -64,50 +75,55 @@ class ClamEngine : public ObjectWrap {
 
   struct cl_engine *engine;
 
+//  // bug in nam.h ?
+//  typedef const v8::FunctionCallbackInfo<v8::Value>& FIX_NAM_METHOD_ARGS_TYPE;
+//
+//  #define FIX_NAM_METHOD(name)                                                       \
+//      Nan::NAN_METHOD_RETURN_TYPE name(FIX_NAM_METHOD_ARGS_TYPE info)
+
+
   explicit ClamEngine() {
     engine = cl_engine_new();
   }
 
-  static NAN_METHOD(New) {
-    NanScope();
-    ClamEngine* self = new ClamEngine();
-    self->Wrap(args.This());
-    args.This()->Set(NanNew<String>("version"), NanNew<String>(cl_retver()));
-    NanReturnValue(args.This());
-  }
+  public:
+    static void Init() {
+      Local<FunctionTemplate> tpl = Nan::New<FunctionTemplate>(ClamEngine::New);
+      constructor.Reset(tpl);
+      tpl->SetClassName(Nan::New<String>("ClamEngine").ToLocalChecked());
+      tpl->InstanceTemplate()->SetInternalFieldCount(1);
+      SetPrototypeMethod(tpl, "init", ClamEngine::InitAsync);
+      SetPrototypeMethod(tpl, "scanFile", ClamEngine::ScanFileAsync);
+    }
 
-  static NAN_METHOD(InitAsync) {
-    NanScope();
-    ClamEngine* self = ObjectWrap::Unwrap<ClamEngine>(args.This());
-    NanCallback *callback = new NanCallback(args[0].As<Function>());
-    NanAsyncQueueWorker(new ClamInitWorker(callback, self->engine));
-    NanReturnUndefined();
-  }
+    static void New(Nan::NAN_METHOD_ARGS_TYPE info) {
+      HandleScope();
+      ClamEngine* self = new ClamEngine();
+      self->Wrap(info.This());
+      info.This()->Set(Nan::New<String>("version").ToLocalChecked(), Nan::New<String>(cl_retver()).ToLocalChecked());
+      info.GetReturnValue().Set(info.This());
+    }
 
-  static NAN_METHOD(ScanFileAsync) {
-    NanScope();
-    ClamEngine* self = ObjectWrap::Unwrap<ClamEngine>(args.This());
-    Local<String> filename = args[0].As<String>();
-    NanCallback *callback = new NanCallback(args[1].As<Function>());
-    NanAsyncQueueWorker(new ClamScanWorker(callback, self->engine, filename));
-    NanReturnUndefined();
-  }
+   static void InitAsync(Nan::NAN_METHOD_ARGS_TYPE info) {
+      HandleScope();
+      ClamEngine* self = ObjectWrap::Unwrap<ClamEngine>(info.This());
+      Callback *callback = new Callback(info[0].As<Function>());
+      AsyncQueueWorker(new ClamInitWorker(callback, self->engine));
+    }
+
+    static void ScanFileAsync(Nan::NAN_METHOD_ARGS_TYPE info) {
+      HandleScope();
+      ClamEngine* self = ObjectWrap::Unwrap<ClamEngine>(info.This());
+      Local<String> filename = info[0].As<String>();
+      Callback *callback = new Callback(info[1].As<Function>());
+      AsyncQueueWorker(new ClamScanWorker(callback, self->engine, filename));
+    }
 
   virtual ~ClamEngine() {
     cl_engine_free(engine);
   }
 
-  public:
-  static void Init() {
-    Local<FunctionTemplate> tpl = NanNew<FunctionTemplate>(ClamEngine::New);
-    NanAssignPersistent(constructor, tpl);
-    tpl->SetClassName(NanNew<String>("ClamEngine"));
-    tpl->InstanceTemplate()->SetInternalFieldCount(1);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "init", ClamEngine::InitAsync);
-    NODE_SET_PROTOTYPE_METHOD(tpl, "scanFile", ClamEngine::ScanFileAsync);
-  }
-
-  class ClamInitWorker : public NanAsyncWorker {
+  class ClamInitWorker : public AsyncWorker {
 
     int ret;
     struct cl_engine *engine;
@@ -115,8 +131,8 @@ class ClamEngine : public ObjectWrap {
 
     public:
 
-    ClamInitWorker(NanCallback *callback, struct cl_engine *engine)
-      : NanAsyncWorker(callback), engine(engine), sigs(0) {}
+    ClamInitWorker(Callback *callback, struct cl_engine *engine)
+      : AsyncWorker(callback), engine(engine), sigs(0) {}
     ~ClamInitWorker() {}
 
     void Execute() {
@@ -128,14 +144,14 @@ class ClamEngine : public ObjectWrap {
     }
 
     void HandleOKCallback() {
-      NanScope();
+      HandleScope();
       Local<Value>argv[2];
       if (ret != CL_SUCCESS) {
-        argv[0] = NanError(cl_strerror(ret), ret);
-        argv[1] = NanNull();
+        argv[0] = Error(cl_strerror(ret));
+        argv[1] = Null();
       } else {
-        argv[0] = NanNull();
-        argv[1] = NanNew<Number>(sigs);
+        argv[0] = Null();
+        argv[1] = Nan::New<Number>(sigs);
       }
       callback->Call(2, argv);
     }
@@ -146,8 +162,8 @@ class ClamEngine : public ObjectWrap {
 void Init(Handle<Object> exports, Handle<Object> module) {
   assert(cl_init(CL_INIT_DEFAULT) == CL_SUCCESS);
   ClamEngine::Init();
-  Local<FunctionTemplate> constructorHandle = NanNew(constructor);
-  module->Set(NanNew<String>("exports"), constructorHandle->GetFunction());
+  Local<FunctionTemplate> constructorHandle = New(constructor);
+  module->Set(Nan::New<String>("exports").ToLocalChecked(), constructorHandle->GetFunction());
 }
 
 NODE_MODULE(engine, Init)
