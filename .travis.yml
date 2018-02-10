@@ -11,13 +11,10 @@ node_js:
 
 os:
   - linux
+  - osx
 
 matrix:
   fast_finish: true
 
 before_install: './ci/before_install.sh'
-
-before_script:
-  - sudo mkdir /var/lib/clamav && sudo chmod 777 /var/lib/clamav
-  - wget http://db.us.clamav.net/main.cvd -O /var/lib/clamav/main.cvd
-  - wget http://db.us.clamav.net/daily.cvd -O /var/lib/clamav/daily.cvd
+before_script: './ci/before_script.sh'
