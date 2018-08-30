@@ -66,7 +66,7 @@ class ClamScanWorker : public AsyncWorker {
       argv[1] = Null();
       break;
     }
-    callback->Call(2, argv);
+    callback->Call(2, argv, async_resource);
   }
 
 };
@@ -74,13 +74,6 @@ class ClamScanWorker : public AsyncWorker {
 class ClamEngine : public ObjectWrap {
 
   struct cl_engine *engine;
-
-//  // bug in nam.h ?
-//  typedef const v8::FunctionCallbackInfo<v8::Value>& FIX_NAM_METHOD_ARGS_TYPE;
-//
-//  #define FIX_NAM_METHOD(name)                                                       \
-//      Nan::NAN_METHOD_RETURN_TYPE name(FIX_NAM_METHOD_ARGS_TYPE info)
-
 
   explicit ClamEngine() {
     engine = cl_engine_new();
@@ -153,7 +146,7 @@ class ClamEngine : public ObjectWrap {
         argv[0] = Null();
         argv[1] = Nan::New<Number>(sigs);
       }
-      callback->Call(2, argv);
+      callback->Call(2, argv, async_resource);
     }
   };
 
