@@ -13,7 +13,7 @@ Clam Engine requires `libclamav` to be present.
 
 ### Via NPM
 
-Just run `npm install clam-engine`. Clam Engine supports Node.js 0.10, 0.11 and 0.12 as well as io.js. If something doesn't work for you using one of those runtimes, please file a bug.
+Just run `npm install clam-engine`. Clam Engine supports Node.js versions 4 through 9. If something doesn't work for you using one of those runtimes, please file a bug.
 
 ## Usage
 
@@ -24,7 +24,7 @@ In order for Clam Engine to work, you need to update the clamav virus signatures
 ### Example
 
     var clam = require('clam-engine');
-    
+
     clam.createEngine(function (err, engine) {
       if (err) {
         return console.log('Error', err);
